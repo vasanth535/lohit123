@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 
 # Load model and encoders
-model = joblib.load("salary_model.pkl")
+model = joblib.load("salary_model_compressed.pkl")
 encoders = joblib.load("label_encoders.pkl")
 
 st.set_page_config(page_title="Employee Salary Predictor", layout="centered")
