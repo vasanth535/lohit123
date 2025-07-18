@@ -2,55 +2,45 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Load model and encoders
-model = joblib.load("salary_model_compressed.pkl")
-encoders = joblib.load("label_encoders.pkl")
+# Load model safely
+try:
+    model = joblib.load("salary_model_compressed.pkl")
+except Exception as e:
+    st.error(f"❌ Failed to load model: {e}")
+    st.stop()
 
-st.set_page_config(page_title="Employee Salary Predictor", layout="centered")
-st.title("💼 Employee Salary Prediction App")
+# Title
+st.title("Employee Salary Prediction")
 
-# Input fields
-age = st.slider("Age", 18, 80, 30)
-workclass = st.selectbox("Workclass", encoders['workclass'].classes_)
-fnlwgt = st.number_input("Final Weight (fnlwgt)", value=200000)
-education = st.selectbox("Education", encoders['education'].classes_)
-educational_num = st.slider("Educational Number", 1, 16, 10)
-marital_status = st.selectbox("Marital Status", encoders['marital-status'].classes_)
-occupation = st.selectbox("Occupation", encoders['occupation'].classes_)
-relationship = st.selectbox("Relationship", encoders['relationship'].classes_)
-race = st.selectbox("Race", encoders['race'].classes_)
-gender = st.selectbox("Gender", encoders['gender'].classes_)
-capital_gain = st.number_input("Capital Gain", 0, 99999, step=100)
-capital_loss = st.number_input("Capital Loss", 0, 4356, step=50)
-hours_per_week = st.slider("Hours per Week", 1, 100, 40)
-native_country = st.selectbox("Native Country", encoders['native-country'].classes_)
+# Input form
+age = st.number_input("Age", min_value=18, max_value=100, value=30)
+education = st.selectbox("Education", ["Bachelors", "HS-grad", "Masters", "Doctorate", "Some-college"])
+capital_gain = st.number_input("Capital Gain", min_value=0, value=0)
+capital_loss = st.number_input("Capital Loss", min_value=0, value=0)
+hours_per_week = st.number_input("Hours per Week", min_value=1, max_value=100, value=40)
+fnlwgt = st.number_input("FNLWGT", min_value=1, value=100000)
+educational_num = st.number_input("Educational-Num", min_value=1, value=13)
+workclass = st.selectbox("Workclass", ["Private", "Self-emp-not-inc", "Local-gov", "State-gov", "Federal-gov"])
 
-# Prepare input
-input_dict = {
-    'age': age,
-    'workclass': workclass,
-    'fnlwgt': fnlwgt,
-    'education': education,
-    'educational-num': educational_num,
-    'marital-status': marital_status,
-    'occupation': occupation,
-    'relationship': relationship,
-    'race': race,
-    'gender': gender,
-    'capital-gain': capital_gain,
-    'capital-loss': capital_loss,
-    'hours-per-week': hours_per_week,
-    'native-country': native_country
-}
-input_df = pd.DataFrame([input_dict])
+# Create input DataFrame
+input_df = pd.DataFrame([{
+    "age": age,
+    "education": education,
+    "capital-gain": capital_gain,
+    "capital-loss": capital_loss,
+    "hours-per-week": hours_per_week,
+    "fnlwgt": fnlwgt,
+    "educational-num": educational_num,
+    "workclass": workclass
+}])
 
-# Encode input
-for col in input_df.columns:
-    if col in encoders:
-        input_df[col] = encoders[col].transform(input_df[col])
-
-# Predict
-if st.button("Predict Salary Class"):
-    prediction = model.predict(input_df)[0]
-    income_label = encoders['income'].inverse_transform([prediction])[0]
-    st.success(f"🔮 Predicted Salary: **{income_label}**")
+# Predict button
+if st.button("Predict"):
+    if hasattr(model, "predict"):
+        try:
+            prediction = model.predict(input_df)[0]
+            st.success(f"🔮 Predicted Salary Class: {prediction}")
+        except Exception as e:
+            st.error(f"⚠️ Prediction failed: {e}")
+    else:
+        st.error("⚠️ Loaded object is not a valid model.")
