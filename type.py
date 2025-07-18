@@ -5,7 +5,7 @@ import joblib
 # Load model and encoder
 try:
     model = joblib.load("salary_model_compressed.pkl")
-    encoder = joblib.load("encoder.pkl")  # Make sure this file exists if you used it in training
+    encoder = joblib.load("label_encoders.pkl")  # Make sure this file exists if you used it in training
 except Exception as e:
     st.error(f"❌ Failed to load model or encoder: {e}")
     st.stop()
