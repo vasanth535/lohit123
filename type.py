@@ -5,15 +5,15 @@ import joblib
 # Load model and encoder
 try:
     model = joblib.load("salary_model_compressed.pkl")
-    encoder = joblib.load("label_encoders.pkl")  # Make sure this file exists if you used it in training
+    encoder_dict = joblib.load("label_encoders.pkl")  # this is a dictionary of mappings
 except Exception as e:
     st.error(f"❌ Failed to load model or encoder: {e}")
     st.stop()
 
-# Streamlit App Title
+# Title
 st.title("💼 Employee Salary Prediction")
 
-# User Inputs
+# Inputs
 age = st.number_input("Age", min_value=18, max_value=100, value=30)
 education = st.selectbox("Education", ["Bachelors", "HS-grad", "Masters", "Doctorate", "Some-college"])
 capital_gain = st.number_input("Capital Gain", min_value=0, value=0)
@@ -35,19 +35,23 @@ input_df = pd.DataFrame([{
     "workclass": workclass
 }])
 
-# Show input for debug
-st.subheader("📋 Input Data")
+# Manual encoding if encoder is a dictionary
+try:
+    for col in ["education", "workclass"]:
+        if col in encoder_dict:
+            input_df[col] = input_df[col].map(encoder_dict[col])
+except Exception as e:
+    st.error(f"⚠️ Encoding failed: {e}")
+    st.stop()
+
+# Display for debug
+st.subheader("📋 Encoded Input Data")
 st.write(input_df)
 
-# Prediction button
+# Predict
 if st.button("🔮 Predict"):
     try:
-        # Apply encoder (e.g., ColumnTransformer, OneHotEncoder)
-        input_encoded = encoder.transform(input_df)
-
-        # Predict salary class
-        prediction = model.predict(input_encoded)[0]
+        prediction = model.predict(input_df)[0]
         st.success(f"✅ Predicted Salary Class: {prediction}")
-
     except Exception as e:
         st.error(f"⚠️ Prediction failed: {e}")
