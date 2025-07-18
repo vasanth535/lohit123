@@ -4,7 +4,7 @@ import joblib
 
 # Load model and encoders
 model = joblib.load("salary_model.pkl")
-encoders = joblib.load("label_encoders.pkl")
+encoders = joblib.load("salary_model_compressed.pkl")
 
 st.set_page_config(page_title="Employee Salary Predictor", layout="centered")
 st.title("💼 Employee Salary Prediction App")
