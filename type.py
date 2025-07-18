@@ -2,50 +2,50 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Load model and encoder
+# Load model and encoders
 try:
     model = joblib.load("salary_model_compressed.pkl")
-    encoder_dict = joblib.load("label_encoders.pkl")  # this is a dictionary of mappings
+    education_encoder = joblib.load("education_encoder.pkl")
+    workclass_encoder = joblib.load("workclass_encoder.pkl")
 except Exception as e:
-    st.error(f"❌ Failed to load model or encoder: {e}")
+    st.error(f"❌ Failed to load model or encoders: {e}")
     st.stop()
 
-# Title
+# Streamlit Title
 st.title("💼 Employee Salary Prediction")
 
 # Inputs
 age = st.number_input("Age", min_value=18, max_value=100, value=30)
-education = st.selectbox("Education", ["Bachelors", "HS-grad", "Masters", "Doctorate", "Some-college"])
+education = st.selectbox("Education", education_encoder.classes_.tolist())
 capital_gain = st.number_input("Capital Gain", min_value=0, value=0)
 capital_loss = st.number_input("Capital Loss", min_value=0, value=0)
 hours_per_week = st.number_input("Hours per Week", min_value=1, max_value=100, value=40)
 fnlwgt = st.number_input("FNLWGT", min_value=1, value=100000)
 educational_num = st.number_input("Educational-Num", min_value=1, value=13)
-workclass = st.selectbox("Workclass", ["Private", "Self-emp-not-inc", "Local-gov", "State-gov", "Federal-gov"])
+workclass = st.selectbox("Workclass", workclass_encoder.classes_.tolist())
+
+# Encode categorical fields
+try:
+    education_encoded = education_encoder.transform([education])[0]
+    workclass_encoded = workclass_encoder.transform([workclass])[0]
+except Exception as e:
+    st.error(f"⚠️ Encoding failed: {e}")
+    st.stop()
 
 # Create input DataFrame
 input_df = pd.DataFrame([{
     "age": age,
-    "education": education,
+    "education": education_encoded,
     "capital-gain": capital_gain,
     "capital-loss": capital_loss,
     "hours-per-week": hours_per_week,
     "fnlwgt": fnlwgt,
     "educational-num": educational_num,
-    "workclass": workclass
+    "workclass": workclass_encoded
 }])
 
-# Manual encoding if encoder is a dictionary
-try:
-    for col in ["education", "workclass"]:
-        if col in encoder_dict:
-            input_df[col] = input_df[col].map(encoder_dict[col])
-except Exception as e:
-    st.error(f"⚠️ Encoding failed: {e}")
-    st.stop()
-
-# Display for debug
-st.subheader("📋 Encoded Input Data")
+# Show inputs
+st.subheader("📋 Model Input")
 st.write(input_df)
 
 # Predict
